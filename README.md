@@ -45,78 +45,25 @@ const { address, pubkey } = account;
 
 ## Private Keys and Offline Signing
 
-Cosmjs does not publicly expose the private key for accounts. Instead, messages are passed into the wallet for signing. Cosmjs provides a signing client in the `stargate` module.
+Cosmjs does not publicly expose the private key for accounts. Instead, messages are passed into the wallet for signing. This can be done directly, as shown below.
 
 ```ts
-import { Secp256k1HdWallet } from "@cosmjs/launchpad";
-import { stargate as akashStargate } from "@akashnetwork/akashjs";
-import { Registry } from "@cosmjs/proto-signing";
-import {
-  SigningStargateClient,
-  StargateClient,
-} from "@cosmjs/stargate";
+import { Secp256k1HdWallet, StdSignDoc } from "@cosmjs/launchpad";
+
+function getMessage(): StdSignDoc {
+  // implements custom message
+}
 
 const wallet = await Secp256k1HdWallet
-	.generate(undefined, { prefix: "akash" });
+    .generate(undefined, { prefix: "akash" });
 
-// You can use your own RPC node, or get a list of public nodes from akashjs
-const rpcEndpoint = "http://my.rpc.node";
+const [account] = await wallet.getAccounts();
+const msg = getMessage(); // your custom message
 
-const myRegistry = new Registry([
-	...defaultRegistryTypes,
-	...akashStargate.registry,
-]);
-
-const client = await SigningStargateClient.connectWithSigner(
-  rpcEndpoint,
-  wallet,
-  { registry: myRegistry }
+const signedMessage = await wallet.signAmino(
+    account.address,
+    msg
 );
-
-const [ account ] = wallet.getAccounts();
-const msg = getMessage() // your custom message
-const fee = {
-  amount: [
-    {
-      denom: "uakt",
-      amount: "0.1",
-    },
-  ],
-  gas: "1", // 180k
-};
-
-const signedMessage = await client.sign(
-  account.address,
-  [msgAny],
-  fee,
-  memo
-);
-```
-
-## Broadcasting Signed Messages
-
-The signing client includes the ability to also broadcast the signed message. Simply replace the `sign` call to `signAndBroadcast`.
-
-```ts
-import { Secp256k1HdWallet } from "@cosmjs/launchpad";
-import { stargate as akashStargate } from "@akashnetwork/akashjs";
-import { Registry } from "@cosmjs/proto-signing";
-import {
-  assertIsBroadcastTxSuccess,
-  SigningStargateClient,
-  StargateClient,
-} from "@cosmjs/stargate";
-
-// ...
-
-const signedMessage = await client.signAndBroadcast(
-  account.address,
-  [msgAny],
-  fee,
-  memo
-);
-
-assertIsBroadcastTxSuccess(result);
 ```
 
 ## Validating An Address
