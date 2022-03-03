@@ -131,7 +131,7 @@ function validateAddress(address: string) {
 
 ## Unsigned Transactions
 
-Basic transactions that do not requiring signing (such as querying) can be done using the basic RPC capabilities build into akashjs. For example, to query the list of deployments an RPC request can be created as such.
+Basic transactions that do not requiring signing (such as querying) can be done using the basic RPC capabilities build into `akashjs`. For example, to query the list of deployments an RPC request can be created as such.
 
 ```ts
 import { getRpc } from "../src/rpc";
@@ -148,7 +148,7 @@ const request = QueryDeploymentsRequest.fromJSON({
 });
 ```
 
-Once the request has been created, it can be passed to the appropriate ClientImpl method (`Deployments` in this case).
+Once the request has been created, it can be passed to the appropriate <Service>ClientImpl method (`Deployments` in this case).
 
 ```ts
 const client = new QueryClientImpl(getRpc("http://my.rpc.node"));
@@ -158,8 +158,7 @@ const data = QueryDeploymentResponse.toJSON(response);
 
 ## Signed Transactions
 
-For transactions that requiring signing, requests must be passed through the signing client. 
-
+For transactions that requiring signing, requests must be passed through the signing client. Basic setup is the same as for any signed requests. For the message, the appropriate message type can be imported from `akashjs`. Below is an example of a deployment close message.
 
 ```ts
 import { Secp256k1HdWallet } from "@cosmjs/launchpad";
@@ -169,6 +168,9 @@ import {
   SigningStargateClient,
   StargateClient,
 } from "@cosmjs/stargate";
+
+// import the required message type from akashjs
+import { MsgCloseDeployment } from "@akashnetwork/akashjs/protobuf/akash/deployment/v1beta1/deployment";
 
 const wallet = await Secp256k1HdWallet
 	.generate(undefined, { prefix: "akash" });
@@ -189,7 +191,21 @@ const client = await SigningStargateClient.connectWithSigner(
 
 const [ account ] = wallet.getAccounts();
 
-const msg = 
+// Use the encode method for the message to wrap the data
+const message = MsgCloseDeployment.encode(
+  MsgCloseDeployment.fromJSON({
+    id: {
+      dseq: "555555"
+      owner: 'ownerAddress'
+    }
+  })
+}).finish();
+
+// Set the appropriate typeUrl and attach the encoded message as the value
+const msgAny = {
+  typeUrl: "akash.deployment.v1beta1.Msg/CloseDeployment",
+  value: message
+});
 
 const fee = const fee = {
   amount: [
