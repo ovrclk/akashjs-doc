@@ -1,0 +1,12 @@
+{
+  "name": "akash-doc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:ovrclk/akashjs-doc.git",
+  "author": "Joseph Tary <joseph.tary@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@cosmjs/launchpad": "^0.27.1",
+    "typescript": "^4.6.2"
+  }
+}

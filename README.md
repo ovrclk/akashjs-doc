@@ -40,7 +40,7 @@ const wallet = await Secp256k1HdWallet
 const [account] = await wallet.getAccounts();
 
 // pull the address and pubKey from the first account
-const { address, pubKey } = account;
+const { address, pubkey } = account;
 ```
 
 ## Private Keys and Offline Signing
