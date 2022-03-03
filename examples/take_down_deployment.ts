@@ -4,7 +4,6 @@ import { Registry } from "@cosmjs/proto-signing";
 import {
     defaultRegistryTypes,
     SigningStargateClient,
-    StargateClient,
 } from "@cosmjs/stargate";
 
 // import the required message type from akashjs
