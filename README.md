@@ -68,29 +68,23 @@ const signedMessage = await wallet.signAmino(
 
 ## Validating An Address
 
-Currently neither `cosmjs` or `akashjs` have methods of directly validating addresses. A basic validation can be done in JavaScript using the following method.
-
-```ts
-function validateAddress(address: string) {
-	const buffer = Buffer.from
-}
-```
+Currently neither `cosmjs` or `akashjs` have methods of directly validating addresses. A basic validation can be done in JavaScript using either a RegEx or by attempting to convert the address to a public key.
 
 ## Unsigned Transactions
 
 Basic transactions that do not requiring signing (such as querying) can be done using the basic RPC capabilities build into `akashjs`. For example, to query the list of deployments an RPC request can be created as such.
 
 ```ts
-import { getRpc } from "../src/rpc";
 import {
-    QueryClientImpl,
+    QueryDeploymentsResponse,
     QueryDeploymentsRequest,
-    QueryDeploymentsResponse
-} from "../src/protobuf/akash/deployment/v1beta1/query";
+    QueryClientImpl
+} from "@akashnetwork/akashjs/build/protobuf/akash/deployment/v1beta1/query";
+import { getRpc } from "@akashnetwork/akashjs/build/rpc"
 
 const request = QueryDeploymentsRequest.fromJSON({
     filters: {
-        owner: "akash-address",
+        owner: "akashSomeOwnerAddress",
     }
 });
 ```
@@ -98,9 +92,9 @@ const request = QueryDeploymentsRequest.fromJSON({
 Once the request has been created, it can be passed to the appropriate <Service>ClientImpl method (`Deployments` in this case).
 
 ```ts
-const client = new QueryClientImpl(getRpc("http://my.rpc.node"));
+const client = new QueryClientImpl(getRpc("http://your.rpc.node"));
 const response = await client.Deployments(request);
-const data = QueryDeploymentResponse.toJSON(response);
+const data = QueryDeploymentsResponse.toJSON(response);
 ```
 
 ## Signed Transactions
