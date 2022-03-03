@@ -99,69 +99,66 @@ const data = QueryDeploymentsResponse.toJSON(response);
 
 ## Signed Transactions
 
-For transactions that requiring signing, requests must be passed through the signing client. Basic setup is the same as for any signed requests. For the message, the appropriate message type can be imported from `akashjs`. Below is an example of a deployment close message.
+For transactions that requiring signing, requests must be passed through the signing client. For creating the message, the appropriate message type can be imported from `akashjs`. Below is an example of creating a CloseDeployment message.
 
 ```ts
 import { Secp256k1HdWallet } from "@cosmjs/launchpad";
 import { stargate as akashStargate } from "@akashnetwork/akashjs";
 import { Registry } from "@cosmjs/proto-signing";
 import {
-  SigningStargateClient,
-  StargateClient,
+    defaultRegistryTypes,
+    SigningStargateClient,
 } from "@cosmjs/stargate";
 
-// import the required message type from akashjs
-import { MsgCloseDeployment } from "@akashnetwork/akashjs/protobuf/akash/deployment/v1beta1/deployment";
-
 const wallet = await Secp256k1HdWallet
-	.generate(undefined, { prefix: "akash" });
+    .generate(undefined, { prefix: "akash" });
+
+// Use the encode method for the message to wrap the data
+const message = MsgCloseDeployment.encode(
+    MsgCloseDeployment.fromJSON({
+        id: {
+            dseq: "555555",
+            owner: 'ownerAddress'
+        }
+    })
+).finish();
+
+// Set the appropriate typeUrl and attach the encoded message as the value
+const msgAny = {
+    typeUrl: "akash.deployment.v1beta1.Msg/CloseDeployment",
+    value: message
+};
 
 // You can use your own RPC node, or get a list of public nodes from akashjs
 const rpcEndpoint = "http://my.rpc.node";
 
 const myRegistry = new Registry([
-	...defaultRegistryTypes,
-	...akashStargate.registry,
+    ...defaultRegistryTypes,
+    ...akashStargate.registry as any,
 ]);
 
 const client = await SigningStargateClient.connectWithSigner(
-  rpcEndpoint,
-  wallet,
-  { registry: myRegistry }
+    rpcEndpoint,
+    wallet,
+    { registry: myRegistry }
 );
 
-const [ account ] = wallet.getAccounts();
+const [account] = await wallet.getAccounts();
 
-// Use the encode method for the message to wrap the data
-const message = MsgCloseDeployment.encode(
-  MsgCloseDeployment.fromJSON({
-    id: {
-      dseq: "555555"
-      owner: 'ownerAddress'
-    }
-  })
-}).finish();
-
-// Set the appropriate typeUrl and attach the encoded message as the value
-const msgAny = {
-  typeUrl: "akash.deployment.v1beta1.Msg/CloseDeployment",
-  value: message
-});
-
-const fee = const fee = {
-  amount: [
-    {
-      denom: "uakt",
-      amount: "0.1",
-    },
-  ],
-  gas: "1", // 180k
+const fee = {
+    amount: [
+        {
+            denom: "uakt",
+            amount: "5000",
+        },
+    ],
+    gas: "800000",
 };
 
 const signedMessage = await client.signAndBroadcast(
-  account.address,
-  [msgAny],
-  fee,
-  memo
+    account.address,
+    [msgAny],
+    fee,
+    "take down deployment"
 );
 ```
