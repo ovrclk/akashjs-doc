@@ -30,6 +30,12 @@ The REST endpoints can be found in the `apis` > `rest` section.
 }
 ```
 
+For any node, you can query it's `node_info` endpoint to test the nodes responsive, and check its version support.
+
+```sh
+curl -s http://<rest node>/node_info
+```
+
 ## Queries Paths
 
 A Swagger document defining the REST API that Akash nodes expose can be found [here](https://raw.githubusercontent.com/ovrclk/akash/mainnet/main/client/docs/swagger-ui/swagger.yaml)
@@ -90,6 +96,12 @@ To broadcast a transaction, the signed transaction message must be compiled ahea
 }
 ```
 
+The `mode` of the message will determine how/what the request returns. The possible values are `block`, `sync` or `async`.
+
+- `block`: Will return once the message is added to a block, but before the block is verified.
+- `sync`: Will return only once the block has been validated.
+- `aysnc`: Will return immediately.
+
 The message and signature must be generated via an offline signer using the appropriate wallet/keys. See [this document](https://github.com/ovrclk/akashjs-doc/blob/main/README.md) for using an example of using akashjs to generate this.
 
 This message can be placed into a file, and passed into curl to broadcast it to Akash. 
@@ -103,10 +115,105 @@ Since broadcasting is a mutating action, it must be submitted via a POST request
 
 ## Estimate Gas Fees
 
-Most of the transaction methods available via the Akash REST API support a `simulate` flag that will calculate the estimated gas cost for the proposed transaction.
+To be determined
 
-	curl -s http://<rest node>/blocks/latest | jq -r '.block.header.height'
-	
-## Query Status of Transactions
-	
-	curl -s http://<rest node>/blocks/latest | jq -r '.block.header.height'
+## Getting Transaction Status
+
+The status for a specific transaction can be requested using the transaction hash. The hash can be passed into the `txs` endpoint as the `tx.hash` query parameter.
+
+```sh
+curl -s http://<rest node>/txs?tx.hash=<hash id>
+```
+
+The returned object will be structured as such:
+
+```json
+  "total_count": "1",
+  "count": "1",
+  "page_number": "1",
+  "page_total": "1",
+  "limit": "30",
+  "txs": [
+	  ...
+  ]
+```
+
+The `txs` property is a list of transactions, however if the endpoint is queried using a single hash, this list will only contain the specific transaction requested. The transaction will contain both the details of the transaction, and a log of it's processing.
+
+```json
+    {
+      "height": "123456",
+      "txhash": "...",
+      "data": "...",
+      "raw_log": "..."
+      "logs": [
+        {
+          "events": [
+			...
+            {
+              "type": "message",
+              "attributes": [
+				...
+                {
+                  "key": "<attribute key>",
+                  "value": "<attribute value>"
+                }
+				...
+              ]
+            },
+			...
+          ]
+        }
+      ],
+      "gas_wanted": "500000",
+      "gas_used": "2500000",
+      "tx": {
+	   ...
+	  },
+      "timestamp": "2022-03-11T18:45:34Z"
+    }
+```
+
+The `log` property will contain a list of all the events that occurred during the processing of the transaction. The same data can also be found as a JSON encoded string in the `raw_log` property.
+
+The `tx` property contains a summarization of the transaction it's self. Its format is as follows:
+
+```json
+{
+  "type": "cosmos-sdk/StdTx",
+  "value": {
+    "msg": [
+      {
+        "type": "cosmos-sdk/SomeMsgType",
+        "value": {
+          "delegator_address": "akash...",
+          "validator_address": "akashvaloper..."
+        }
+      },
+	  ...
+    ],
+    "fee": {
+      "amount": [
+        {
+          "denom": "uakt",
+          "amount": "5000"
+        }
+      ],
+      "gas": "800000"
+    },
+    "signatures": [
+      {
+        "pub_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "xxx"
+        },
+        "signature": "Abc123="
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0"
+  }
+}
+```
+
+`msg` will contain a list of all the messages associated with the transactions. `fee` will contain the fee and gas for the transaction, and `signatures` the required authorization data.
