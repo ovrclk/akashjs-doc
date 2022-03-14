@@ -42,7 +42,7 @@ A Swagger document defining the REST API that Akash nodes expose can be found [h
 
 ## Querying Blocks
 
-Block are available via the `/blocks` path.  You can either query a block directly using its height, or you can query the latest block specifically. The query takes either the block height or `latest` as its parameter.
+Block are available via the `/blocks` path.  You can either query a block directly using its height, or you can query the latest block specifically. This query takes either the block height or `latest` as its parameter.
 
 For example, to query block `55555`, you could query it using curl like so:
 
@@ -50,13 +50,13 @@ For example, to query block `55555`, you could query it using curl like so:
 curl -s http://<rest node>/blocks/55555
 ```
 
-Similarly, you could query the latest block by replacing the block height with `latest`
+Similarly, you could query the latest block by replacing the block height with the keyword `latest`.
 
 ```sh 
 curl -s http://<rest node>/blocks/latest
 ```
 
-The query will return the full block data as a JSON object. The specific for the model can be found in the Swagger document linked above. If specific values are of interest, a utility such as `jq` can be used. For example to get the height of the latest block, the output of curl can be passed to `jq`.
+The query will return the full block data as a JSON object. The model for the return value can be found in the Swagger document linked above. If specific values are of interest, a utility such as `jq` can be used. For example to get the height of the latest block, the output of curl can be passed to `jq`.
 
 ```sh 
 curl -s http://<rest node>/blocks/latest | jq -r '.block.header.height'
@@ -115,7 +115,9 @@ Since broadcasting is a mutating action, it must be submitted via a POST request
 
 ## Estimate Gas Fees
 
-To be determined
+The REST API does not expose a general method for estimating the gas for a transaction. However, a message with the `simulate` flag can be used to request an estimation from a node.
+
+Creating a message like this can be generated using the same method as linked to above.
 
 ## Getting Transaction Status
 
