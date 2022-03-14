@@ -115,9 +115,7 @@ Since broadcasting is a mutating action, it must be submitted via a POST request
 
 ## Estimate Gas Fees
 
-The REST API does not expose a general method for estimating the gas for a transaction. However, a message with the `simulate` flag can be used to request an estimation from a node.
-
-Creating a message like this can be generated using the same method as linked to above.
+The REST API does not expose a general method for estimating the gas for a transaction. If an estimation of gas fees is required, the messages can be simulated using the RPC API available though akashjs. Please see [this document](https://github.com/ovrclk/akashjs-doc/blob/main/README.md) for details.
 
 ## Getting Transaction Status
 

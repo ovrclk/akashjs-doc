@@ -6,7 +6,7 @@
   "author": "Joseph Tary <joseph.tary@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@akashnetwork/akashjs": "^0.0.14",
+    "@akashnetwork/akashjs": "^0.0.20",
     "@cosmjs/launchpad": "^0.27.1",
     "@cosmjs/proto-signing": "^0.27.1",
     "@cosmjs/stargate": "^0.27.1",
