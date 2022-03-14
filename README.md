@@ -4,7 +4,7 @@ Working with the Akash network can be done in JavaScript by utilizing the cosmjs
 
 ##  Wallet Creation
 
-The below code examples show the process for creating a new Akash wallet using cosmjs, and generating new accounts which contain private/public key pairs and their associated addresses.
+The following code shows an example of the process for creating a new Akash wallet. The wallet can be used to access accounts which contain private/public key pairs and their associated addresses.
 
 A new wallet can be initialized by calling `Secp256k1HdWallet.generate` from @cosmjs/launchpad, and passing `{ prefix: "akash" }`.
 
@@ -17,7 +17,7 @@ const wallet = await Secp256k1HdWallet
 
 ```
 
-After the wallet is created, specific private/public key pairs are available via accounts
+After the wallet is created, specific private/public key pairs are available via `getAccounts`.
 
 ```ts
 import { Secp256k1HdWallet } from "@cosmjs/launchpad";
@@ -72,7 +72,7 @@ Currently neither `cosmjs` or `akashjs` have methods of directly validating addr
 
 ## Unsigned Transactions
 
-Basic transactions that do not requiring signing (such as querying) can be done using the basic RPC capabilities build into `akashjs`. For example, to query the list of deployments an RPC request can be created as such.
+Basic transactions that do not requiring signing (such as querying) can be done using the basic RPC capabilities build into `akashjs`. For example, to query the list of deployments, an RPC request can be created as such.
 
 ```ts
 import {
@@ -99,7 +99,16 @@ const data = QueryDeploymentsResponse.toJSON(response);
 
 ## Signed Transactions
 
-For transactions that requiring signing, requests must be passed through the signing client. For creating the message, the appropriate message type can be imported from `akashjs`. Below is an example of creating and broadcasting a CloseDeployment message.
+For transactions that requiring signing, requests must be passed through the signing client. [AkashJS](https://github.com/ovrclk/akashjs) provides cosmjs compatible implementations of the Akash message types.
+
+To create the message, the appropriate _type_ can be imported from `akashjs`.
+
+```ts
+import { MsgCloseDeployment } from "@akashnetwork/akashjs/build/src/protobuf/akash/deployment/v1beta1/deployment";
+
+```
+
+This type contains the methods needed to construct a message that can then be passed into a Stargate client to be signed and broadcast.
 
 ```ts
 const mnemonic = "your wallet mnemonic";
@@ -125,6 +134,7 @@ const msgAny = {
 // You can use your own RPC node, or get a list of public nodes from akashjs
 const rpcEndpoint = "http://my.rpc.node";
 
+// The akash types need to be registered with the client
 const myRegistry = new Registry(
     getAkashTypeRegistry()
 );
