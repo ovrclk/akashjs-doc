@@ -165,6 +165,64 @@ const signedMessage = await client.signAndBroadcast(
 );
 ```
 
+## Signing MsgSend
+
+Message types that are not part of the Akash specifically may not have specific encoders, as used in the above example. For these, the messages can be created directly as long as they conform to the expected schema for the message. Below is an example of doing this for the cosmos MsgSend message.
+
+```ts
+const mnemonic = "your wallet mnemonic";
+const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: "akash" });
+
+// get first account
+const [account] = await wallet.getAccounts();
+
+// Setup a send message manually. See the appropriate repo (cosmjs in this case)
+// for the specific shape of the message.
+const message = {
+    fromAddress: account.address,
+    toAddress: "akash123...",
+    amount: coins(10, "akt"),
+};
+
+// Set the appropriate typeUrl and attach the encoded message as the value
+const msgAny = {
+    typeUrl: '/cosmos.bank.v1beta1.MsgSend',
+    value: message
+};
+
+// You can use your own RPC node, or get a list of public nodes from akashjs
+const rpcEndpoint = "http://your.rpc.node";
+
+const myRegistry = new Registry(
+    defaultRegistryTypes
+);
+
+const client = await SigningStargateClient.connectWithSigner(
+    rpcEndpoint,
+    wallet,
+    {
+        registry: myRegistry
+    }
+);
+
+const fee = {
+    amount: [
+        {
+            denom: "uakt",
+            amount: "5000",
+        },
+    ],
+    gas: "800000",
+};
+
+const msg = await client.sign(
+    account.address,
+    [msgAny],
+    fee,
+    "send some tokens"
+);
+```
+
 ## Estimating Gas
 
 When sending transactions, it can be useful to get an estimate of the gas required for a given message. This can be done using the `simulate` method of the signing client which will send the passed in message to an RPC node which will return the estimated gas for that transaction. Before is an example of doing this for the same transaction as shown above.
