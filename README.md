@@ -167,9 +167,12 @@ const signedMessage = await client.signAndBroadcast(
 
 ## Signing MsgSend
 
-Message types that are not part of the Akash specifically may not have specific encoders, as used in the above example. For these, the messages can be created directly as long as they conform to the expected schema for the message. Below is an example of doing this for the cosmos MsgSend message.
+Message types that are not part of Akash specifically may not have dedicated utility types, as used in the above example. For these message types, the objects can be created directly as long as they conform to the expected schema. Below is an example of doing this for the cosmos MsgSend message.
 
 ```ts
+import { coins, DirectSecp256k1HdWallet, Registry } from "@cosmjs/proto-signing";
+import { defaultRegistryTypes, SigningStargateClient } from "@cosmjs/stargate";
+
 const mnemonic = "your wallet mnemonic";
 const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: "akash" });
 
