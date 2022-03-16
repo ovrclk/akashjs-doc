@@ -117,6 +117,143 @@ Since broadcasting is a mutating action, it must be submitted via a POST request
 
 The REST API does not expose a general method for estimating the gas for a transaction. If an estimation of gas fees is required, the messages can be simulated using the RPC API available though akashjs. Please see [this document](https://github.com/ovrclk/akashjs-doc/blob/main/README.md) for details.
 
+It is possible to send a request to the RPC API manually; however, this will require encoding and decoding the request. The general procedure is similar to using cosmjs to handle the RPC as detailed above, however the message will be output from the script rather than being sent to the build-in RPC client.
+
+```ts
+const mnemonic = "your mnemonic"
+const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: "akash" });
+
+// We need to first setup the message we want to get an estimate for
+const [account] = await wallet.getAccounts();
+const message = MsgCloseDeployment.fromPartial({
+    id: {
+        dseq: "555555",
+        owner: account.address,
+    }
+});
+
+const msgAny = {
+    typeUrl: getTypeUrl(MsgCloseDeployment),
+    value: message
+};
+
+// Next we setup a client so we can get the sequence for the account
+const rpcEndpoint = "http://your.rpc.node";
+const myRegistry = new Registry(
+    getAkashTypeRegistry()
+);
+const client = await SigningStargateClient.connectWithSigner(
+    rpcEndpoint,
+    wallet,
+    {
+        registry: myRegistry
+    }
+);
+const chainAccount = await client.getAccount(account.address);
+
+// Now we can build the simulate request
+const encodedMessage = myRegistry.encodeAsAny(msgAny);
+const signer = encodeSecp256k1Pubkey(account.pubkey);
+const request = SimulateRequest.fromPartial({
+    tx: Tx.fromPartial({
+        authInfo: AuthInfo.fromPartial({
+            fee: Fee.fromPartial({}),
+            signerInfos: [
+                {
+                    publicKey: encodePubkey(signer),
+                    sequence: Long.fromNumber(chainAccount.sequence, true),
+                    modeInfo: { single: { mode: SignMode.SIGN_MODE_UNSPECIFIED } },
+                },
+            ],
+        }),
+        body: TxBody.fromPartial({
+            messages: Array.from([encodedMessage]),
+            memo: "get estimate",
+        }),
+        signatures: [new Uint8Array()],
+    })
+});
+
+// With our request build we can encode it and output in JSON format
+const output = {
+    jsonrpc: "2.0",
+    "id": 0,
+    "method": "abci_query",
+    "params": {
+        "path": "/cosmos.tx.v1beta1.Service/Simulate",
+        "data": Buffer.from(SimulateRequest.encode(request).finish()).toString("hex"),
+        "prove": false
+    }
+}
+
+// output to the console
+console.log(JSON.stringify(output));
+```
+
+This encoded message can be put into a file, then passed to curl for transmission using the method outlined above. It's important to node that when using this method, the request must be sent to an RPC node rather than a REST node as outlined in the Query URLs section. The request should look similar to:
+
+```sh
+curl -s -X POST -H "Content-Type: application/json" -d @simulate-request.json http://<rpc node>/
+```
+
+The value returned from the request will be encoded and contained in a JSON-RPC object.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 0,
+  "result": {
+    "response": {
+      "code": 0,
+      "log": "",
+      "info": "",
+      "index": "0",
+      "key": null,
+      "value": "CgQQnvM...",
+      "proofOps": null,
+      "height": "123456",
+      "codespace": ""
+    }
+  }
+}
+```
+
+To get the gas estimate, the `value` of the response will need to be decoded. This can be done with a simple script as shown below.
+
+
+```ts
+const response = Buffer.from(
+    "CgQQnvM...",
+    "base64"
+)
+
+console.log(
+    JSON.stringify(
+        SimulateResponse.decode(response)
+    )
+)
+```
+
+The base64-encoded content of the `value` property can be passed into `Buffer.from`. This will convert it into a Buffer than can then be passed to `SimulateResponse` for decoding. The returned value will look like this:
+
+```json
+{
+  gasInfo: {
+    gasWanted: Long { low: 0, high: 0, unsigned: true },
+    gasUsed: Long { low: 178590, high: 0, unsigned: true }
+  },
+  result: {
+    log: '...',
+    events: [
+      ...
+    ],
+    data: '...'
+  }
+}
+```
+
+The contents in `result` can be ignore in this case. The gas-estimate data is contained in the gasInfo property, specifically in the `gasUsed.low` field.
+
 ## Getting Transaction Status
 
 The status for a specific transaction can be requested using the transaction hash. The hash can be passed into the `txs` endpoint as the `tx.hash` query parameter.
